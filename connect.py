@@ -7,15 +7,12 @@ import json
 import uuid
 from connect_ffi import ffi, lib, C
 from console_callbacks import audio_arg_parser, mixer, error_callback, connection_callbacks, debug_callbacks, playback_callbacks, playback_setup
-from lastfm import lastfm_arg_parser
 from utils import print_zeroconf_vars
+import math
 
 class Connect:
     def __init__(self, error_cb = error_callback, web_arg_parser = None):
-        arg_parsers = [audio_arg_parser, lastfm_arg_parser]
-        if web_arg_parser:
-            arg_parsers.append(web_arg_parser)
-        arg_parser = argparse.ArgumentParser(description='Web interface for Spotify Connect', parents=arg_parsers)
+        arg_parser = argparse.ArgumentParser(description='Web interface for Spotify Connect', parents=[audio_arg_parser])
         arg_parser.add_argument('--debug', '-d', help='enable libspotify_embedded/flask debug output', action="store_true")
         arg_parser.add_argument('--key', '-k', help='path to spotify_appkey.key (can be obtained from https://developer.spotify.com/my-account/keys )', default='spotify_appkey.key')
         arg_parser.add_argument('--username', '-u', help='your spotify username')
@@ -87,7 +84,7 @@ class Connect:
         lib.SpRegisterConnectionCallbacks(connection_callbacks, userdata)
         lib.SpRegisterPlaybackCallbacks(playback_callbacks, userdata)
 
-        mixer_volume = int(mixer.getvolume()[0] * 655.35)
+	mixer_volume = int(math.pow(mixer.getvolume()[0] / 100.0, 3) * 65535)
         lib.SpPlaybackUpdateVolume(mixer_volume)
 
         bitrates = {
